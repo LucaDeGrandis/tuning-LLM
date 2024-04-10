@@ -1,4 +1,4 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer,
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 from typing import List, Any, Tuple, Union
@@ -16,7 +16,7 @@ def parse_arguments():
     parser.add_argument("--credentials_path", type=str, required=True, help="Path to the HuggingFace credentials.")
     parser.add_argument("--out_path", type=str, required=True, help="Where to save the generations.")
     parser.add_argument("--test_data_path", type=str, required=True, help="Path to the test data JSONL file.")
-    parser.add_argument("--test_tasks_path", type=str, default=None help="Path to the test data task IDs JSONL file.")
+    parser.add_argument("--test_tasks_path", type=str, default=None, help="Path to the test data task IDs JSONL file.")
     parser.add_argument("--use_peft_lora", action="store_true", help="Use PEFT with LoRA.")
     parser.add_argument("--use_peft_pt", action="store_true", help="Use PEFT with Prompt Tuning.")
     parser.add_argument("--use_peft_mpt", action="store_true", help="Use PEFT with Multitask Prompt Tuning.")
@@ -93,6 +93,7 @@ def create_and_prepare_model(args):
             args.peft_model_name_or_path,
             model=model,
         )
+    model.to('cuda')
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
     return model, tokenizer
 
@@ -127,7 +128,7 @@ def create_generator(args):
 def main(args):
     assert args.credentials_path is not None, \
         "The credentials path must be provided. If you are loading a model that doesn't require credentials, use '--force_skip_credentials True'."
-    hf_token = load_json_file(data_args.credentials_path)['private_token']
+    hf_token = load_json_file(args.credentials_path)['private_token']
     os.environ['HF_TOKEN'] = hf_token
 
     # model
@@ -141,7 +142,7 @@ def main(args):
 
     # generate
     generations = []
-    for prompt in test_dataset:
+    for prompt in tqdm(test_dataset):
         generations.append(generator(model, tokenizer, prompt, max_length=2000))
     write_jsonl_file(
         args.out_path,
