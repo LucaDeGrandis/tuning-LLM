@@ -359,8 +359,6 @@ class ModelInit():
                 prompt_tuning_init_text=self.data_args.prompt_tuning_init_text,
             )
 
-        print(peft_config)
-
         return peft_config
 
     def create_tokenizer(self):
