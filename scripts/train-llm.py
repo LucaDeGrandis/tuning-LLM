@@ -110,17 +110,23 @@ class ModelArguments:
     pt_num_ranks: Optional[int] = field(
         default=1,
         metadata={
-            "help": "The number of ranks for the low rank PT matrices."
+            "help": "The number of ranks for the low rank MPT matrices."
+        },
+    )
+    pt_num_tasks: Optional[int] = field(
+        default=1,
+        metadata={
+            "help": "The number of tasks for MPT."
         },
     )
     trainig_data_ids: Optional[str] = field(
-        default='',
+        default=None,
         metadata={
             "help": "The path to the task ids for the training dataset."
         },
     )
     dev_data_ids: Optional[str] = field(
-        default='',
+        default=None,
         metadata={
             "help": "The path to the task ids for the dev dataset."
         },
@@ -241,8 +247,17 @@ def create_datasets(
     data_train_raw = load_jsonl_file(data_args.training_data_path)
     data_dev_raw = load_jsonl_file(data_args.dev_data_path)
 
-    train_data = Dataset.from_dict({'prompt': data_train_raw})
-    valid_data = Dataset.from_dict({'prompt': data_dev_raw})
+    if data_args.trainig_data_ids is not None and data_args.dev_data_ids is not None:
+        data_train_ids = load_jsonl_file(data_args.trainig_data_ids)
+        data_dev_ids = load_jsonl_file(data_args.dev_data_ids)
+        assert len(data_train_ids) == len(data_train_raw)
+        assert len(data_dev_ids) == len(data_dev_raw)
+        train_data = Dataset.from_dict({'prompt': data_train_raw, 'task_ids': data_train_ids})
+        valid_data = Dataset.from_dict({'prompt': data_dev_raw, 'task_ids': data_dev_ids})
+    else:
+        train_data = Dataset.from_dict({'prompt': data_train_raw})
+        valid_data = Dataset.from_dict({'prompt': data_dev_raw})
+
     train_data = train_data.shuffle(seed=data_args.train_shuffle_seed)
     print(
         f"Size of the train set: {len(train_data)}. Size of the validation set: {len(valid_data)}"
@@ -340,23 +355,23 @@ class ModelInit():
 
         if self.model_args.use_peft_pt:
             peft_config = PromptTuningConfig(
-                num_virtual_tokens=self.data_args.pt_virtual_tokens,
+                num_virtual_tokens=self.model_args.pt_virtual_tokens,
                 tokenizer_name_or_path=self.model_args.model_name_or_path,
                 task_type="CAUSAL_LM",
                 prompt_tuning_init='TEXT',
-                prompt_tuning_init_text=self.data_args.prompt_tuning_init_text,
+                prompt_tuning_init_text=self.model_args.prompt_tuning_init_text,
             )
 
         if self.model_args.use_peft_mpt:
             peft_config = MultitaskPromptTuningConfig(
                 tokenizer_name_or_path=self.model_args.model_name_or_path,
-                num_tasks=3,
-                num_ranks=self.data_args.pt_num_ranks,
+                num_tasks=self.model_args.pt_num_tasks,
+                num_ranks=self.model_args.pt_num_ranks,
                 task_type="CAUSAL_LM",
                 prompt_tuning_init='TEXT',
-                num_virtual_tokens=self.data_args.pt_virtual_tokens,
+                num_virtual_tokens=self.model_args.pt_virtual_tokens,
                 num_transformer_submodules=1,
-                prompt_tuning_init_text=self.data_args.prompt_tuning_init_text,
+                prompt_tuning_init_text=self.model_args.prompt_tuning_init_text,
             )
 
         return peft_config
