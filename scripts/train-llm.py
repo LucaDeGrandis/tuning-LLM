@@ -374,19 +374,19 @@ class ModelInit():
             object: The tokenizer object.
         """
         tokenizer = AutoTokenizer.from_pretrained(
-            self.args.model_name_or_path, trust_remote_code=True
+            self.model_args.model_name_or_path, trust_remote_code=True
         )
         tokenizer.pad_token = tokenizer.eos_token
 
         return tokenizer
 
 
-def create_and_prepare_model(args, data_args, training_args):
+def create_and_prepare_model(model_args, data_args, training_args):
     """
     Creates and prepares the model initializer for training.
 
     Args:
-        args (object): The arguments for model initialization.
+        model_args (object): The arguments for model initialization.
         data_args (object): The arguments for data preparation.
         training_args (object): The arguments for training.
 
@@ -394,7 +394,7 @@ def create_and_prepare_model(args, data_args, training_args):
         tuple: A tuple containing the model initialization object and the tokenizer.
     """
     model_init = ModelInit(
-        args=args,
+        model_args=model_args,
         data_args=data_args,
         training_args=training_args,
     )
