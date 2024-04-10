@@ -90,8 +90,8 @@ def create_and_prepare_model(args):
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     if args.use_peft_lora or args.use_peft_pt or args.use_peft_mpt:
         model = PeftModel.from_pretrained(
+            model,
             args.peft_model_name_or_path,
-            model=model,
         )
     model.to('cuda')
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
