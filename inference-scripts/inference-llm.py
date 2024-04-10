@@ -73,7 +73,7 @@ def write_json_file(
 def create_datasets(
     args,
 ) -> Union[List[str], List[Tuple[str, int]]]:
-    data_test = load_jsonl_file(args.dev_data_path)
+    data_test = load_jsonl_file(args.test_data_path)
 
     if args.use_peft_mpt:
         assert args.test_tasks_path is not None
