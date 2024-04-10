@@ -119,7 +119,7 @@ class ModelArguments:
             "help": "The number of tasks for MPT."
         },
     )
-    trainig_data_ids: Optional[str] = field(
+    training_data_ids: Optional[str] = field(
         default=None,
         metadata={
             "help": "The path to the task ids for the training dataset."
@@ -233,7 +233,7 @@ def load_jsonl_file(
 
 
 def create_datasets(
-    data_args,
+    data_args, model_args,
 ) -> Tuple[Dataset, Dataset]:
     """
     Create train and validation datasets.
@@ -247,9 +247,11 @@ def create_datasets(
     data_train_raw = load_jsonl_file(data_args.training_data_path)
     data_dev_raw = load_jsonl_file(data_args.dev_data_path)
 
-    if data_args.trainig_data_ids is not None and data_args.dev_data_ids is not None:
-        data_train_ids = load_jsonl_file(data_args.trainig_data_ids)
-        data_dev_ids = load_jsonl_file(data_args.dev_data_ids)
+    if model_args.use_peft_mpt:
+        assert model_args.training_data_ids is not None
+        assert model_args.dev_data_ids is not None
+        data_train_ids = load_jsonl_file(model_args.training_data_ids)
+        data_dev_ids = load_jsonl_file(model_args.dev_data_ids)
         assert len(data_train_ids) == len(data_train_raw)
         assert len(data_dev_ids) == len(data_dev_raw)
         train_data = Dataset.from_dict({'prompt': data_train_raw, 'task_ids': data_train_ids})
@@ -435,7 +437,7 @@ def main(model_args, data_args, training_args):
 
     # datasets
     train_dataset, eval_dataset = create_datasets(
-        data_args,
+        data_args, model_args,
     )
 
     # trainer
