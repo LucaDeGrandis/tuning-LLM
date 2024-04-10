@@ -452,6 +452,6 @@ if __name__ == "__main__":
         (ModelArguments, DataTrainingArguments, TrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    if training_args.report_to == 'wandb':
+    if training_args.report_to == ['wandb']:
         register_wandb_project(model_args)
     main(model_args, data_args, training_args)
