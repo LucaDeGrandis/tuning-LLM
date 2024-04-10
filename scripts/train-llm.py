@@ -434,7 +434,6 @@ def main(model_args, data_args, training_args):
         packing=data_args.packing,
         dataset_kwargs={
             "append_concat_token": data_args.append_concat_token,
-            "add_special_tokens": data_args.add_special_tokens,
         },
         dataset_text_field="prompt",
         max_seq_length=data_args.max_seq_length,
