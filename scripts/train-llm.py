@@ -228,7 +228,6 @@ def load_jsonl_file(
 
 def create_datasets(
     data_args,
-    tokenizer,
 ) -> Tuple[Dataset, Dataset]:
     """
     Create train and validation datasets.
@@ -241,10 +240,6 @@ def create_datasets(
     """
     data_train_raw = load_jsonl_file(data_args.training_data_path)
     data_dev_raw = load_jsonl_file(data_args.dev_data_path)
-
-    if data_args.pretokenize_to_max_length:
-        data_train_raw = [x + tokenizer.pad_token * data_args.max_seq_length for x in data_train_raw]
-        data_dev_raw = [x + tokenizer.pad_token * data_args.max_seq_length for x in data_dev_raw]
 
     train_data = Dataset.from_dict({'prompt': data_train_raw})
     valid_data = Dataset.from_dict({'prompt': data_dev_raw})
