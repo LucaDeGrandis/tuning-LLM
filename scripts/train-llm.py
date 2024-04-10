@@ -338,7 +338,6 @@ class ModelInit():
                 else self.model_args.lora_target_modules,
             )
 
-        peft_config = None
         if self.model_args.use_peft_pt:
             peft_config = PromptTuningConfig(
                 num_virtual_tokens=self.data_args.pt_virtual_tokens,
@@ -348,7 +347,7 @@ class ModelInit():
                 prompt_tuning_init_text=self.data_args.prompt_tuning_init_text,
             )
 
-        if self.model_args.use_peft_pt:
+        if self.model_args.use_peft_mpt:
             peft_config = MultitaskPromptTuningConfig(
                 tokenizer_name_or_path=self.model_args.model_name_or_path,
                 num_tasks=3,
@@ -359,6 +358,8 @@ class ModelInit():
                 num_transformer_submodules=1,
                 prompt_tuning_init_text=self.data_args.prompt_tuning_init_text,
             )
+
+        print(peft_config)
 
         return peft_config
 
