@@ -13,7 +13,7 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Inference LLM")
     parser.add_argument("--model_name_or_path", type=str, required=True, help="Path to the pre-trained model or model identifier from Hugging Face model hub.")
-    parser.add_argument("--peft_model_name_or_path", type=str, required=True, help="Path to the pre-trained peft model or model identifier from Hugging Face model hub.")
+    parser.add_argument("--peft_model_name_or_path", type=str, help="Path to the pre-trained peft model or model identifier from Hugging Face model hub.")
     parser.add_argument("--credentials_path", type=str, required=True, help="Path to the HuggingFace credentials.")
     parser.add_argument("--out_path", type=str, required=True, help="Where to save the generations.")
     parser.add_argument("--test_data_path", type=str, required=True, help="Path to the test data JSONL file.")
@@ -117,7 +117,7 @@ def create_and_prepare_model(args):
 
 
 def create_generator(args, tokenizer):
-    assert sum([args.use_peft_lora, args.use_peft_pt, args.use_peft_mpt]) == 1
+    assert sum([args.use_peft_lora, args.use_peft_pt, args.use_peft_mpt]) <= 1
 
     eos_token_id = tokenizer.eos_token_id
     if args.custom_eos_token is not None:
