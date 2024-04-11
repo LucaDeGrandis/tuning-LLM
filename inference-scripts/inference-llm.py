@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 from typing import List, Any, Tuple, Union
+from tqdm import tqdm
 
 import os
 import json
@@ -20,6 +21,7 @@ def parse_arguments():
     parser.add_argument("--use_peft_lora", action="store_true", help="Use PEFT with LoRA.")
     parser.add_argument("--use_peft_pt", action="store_true", help="Use PEFT with Prompt Tuning.")
     parser.add_argument("--use_peft_mpt", action="store_true", help="Use PEFT with Multitask Prompt Tuning.")
+    parser.add_argument("--custom_eos_token", type=str, default=None, help="A custom eos token to stop generation early (can drastically reduce inference time).")
     return parser.parse_args()
 
 
@@ -70,6 +72,22 @@ def write_json_file(
         json.dump(input_dict, writer, indent=4, ensure_ascii=False)
 
 
+def write_jsonl_file(
+    filepath: str,
+    input_list: List[Any],
+    mode: str ='a+',
+    overwrite: bool =False
+) -> None:
+    if overwrite:
+        try:
+            os.remove(filepath)
+        except:
+            pass
+    with open(filepath, mode, encoding='utf8') as writer:
+        for line in input_list:
+            writer.write(json.dumps(line) + '\n')
+
+
 def create_datasets(
     args,
 ) -> Union[List[str], List[Tuple[str, int]]]:
@@ -98,29 +116,57 @@ def create_and_prepare_model(args):
     return model, tokenizer
 
 
-def create_generator(args):
+def create_generator(args, tokenizer):
     assert sum([args.use_peft_lora, args.use_peft_pt, args.use_peft_mpt]) == 1
+
+    eos_token_id = tokenizer.eos_token_id
+    if args.custom_eos_token is not None:
+        eos_token_id = tokenizer.encode(args.custom_eos_token)
+
     if args.use_peft_lora:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(tok['input_ids'], max_length=max_length, temperature=0)[0]
+            gen = model.generate(
+                tok['input_ids'],
+                max_length=max_length,
+                temperature=0,
+                eos_token_id=eos_token_id
+            )[0]
             return tokenizer.decode(gen)
     elif args.use_peft_pt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(input_ids=tok['input_ids'], attention_mask=tok['attention_mask'], max_length=max_length, temperature=0)[0]
+            gen = model.generate(
+                input_ids=tok['input_ids'],
+                attention_mask=tok['attention_mask'],
+                max_length=max_length,
+                temperature=0,
+                eos_token_id=eos_token_id
+            )[0]
             return tokenizer.decode(gen)
     elif args.use_peft_mpt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt[0], return_tensors='pt')
             tok['task_ids'] = torch.tensor([prompt[1]])
             tok.to('cuda')
-            gen = model.generate(input_ids=tok['input_ids'], attention_mask=tok['attention_mask'], task_ids=tok['task_ids'], max_length=max_length, temperature=0)[0]
+            gen = model.generate(
+                input_ids=tok['input_ids'],
+                attention_mask=tok['attention_mask'],
+                task_ids=tok['task_ids'],
+                max_length=max_length,
+                temperature=0,
+                eos_token_id=eos_token_id
+            )[0]
             return tokenizer.decode(gen)
     else:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(tok['input_ids'], max_length=max_length, temperature=0)[0]
+            gen = model.generate(
+                tok['input_ids'],
+                max_length=max_length,
+                temperature=0,
+                eos_token_id=eos_token_id
+            )[0]
             return tokenizer.decode(gen)
     return generator
 
@@ -138,7 +184,7 @@ def main(args):
     test_dataset = create_datasets(args)
 
     # generator function
-    generator = create_generator(args)
+    generator = create_generator(args, tokenizer)
 
     # generate
     generations = []
