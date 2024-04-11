@@ -187,6 +187,7 @@ def main(args):
     generator = create_generator(args, tokenizer)
 
     # generate
+    print('Saving results to:', args.out_path)
     generations = []
     for prompt in tqdm(test_dataset):
         generations.append(generator(model, tokenizer, prompt, max_length=2000))
