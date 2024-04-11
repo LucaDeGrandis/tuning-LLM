@@ -113,7 +113,7 @@ def create_generator(args):
     elif args.use_peft_mpt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt[0], return_tensors='pt')
-            tok['input_ids'] = torch.tensor([prompt[1]])
+            tok['task_ids'] = torch.tensor([prompt[1]])
             tok.to('cuda')
             gen = model.generate(input_ids=tok['input_ids'], attention_mask=tok['attention_mask'], task_ids=tok['task_ids'], max_length=max_length, temperature=0)[0]
             return tokenizer.decode(gen)
