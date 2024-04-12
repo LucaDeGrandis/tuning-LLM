@@ -94,8 +94,11 @@ def create_datasets(
     data_test = load_jsonl_file(args.test_data_path)
 
     if args.use_peft_mpt:
-        assert args.test_tasks_path is not None
-        data_test_ids = load_jsonl_file(args.test_tasks_path)
+        if args.test_tasks_path is not None:
+            data_test_ids = load_jsonl_file(args.test_tasks_path)
+        else:
+            print("Waring: No task IDs provided for multitask prompt tuning. Using task ID 0 for all examples.")
+            data_test_ids = [0] * len(data_test)
         assert len(data_test) == len(data_test_ids)
         data_test = [(prompt, id) for prompt, id in zip(data_test, data_test_ids)]
 
