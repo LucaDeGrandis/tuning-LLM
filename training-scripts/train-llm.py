@@ -12,6 +12,7 @@ from peft import (
     LoraConfig,
     PromptTuningConfig,
     MultitaskPromptTuningConfig,
+    MultitaskPromptTuningInit,
 )
 from trl import SFTTrainer
 
@@ -95,6 +96,10 @@ class ModelArguments:
         metadata={
             "help": "The path to the prompt tuning state dict used for initialization."
         },
+    )
+    pt_init_state_dict: Optional[str] = field(
+        default=None,
+        metadata={"help": "The state dict from which to train the target mpt."},
     )
 
     #####################################
@@ -365,16 +370,28 @@ class ModelInit():
             )
 
         if self.model_args.use_peft_mpt:
-            peft_config = MultitaskPromptTuningConfig(
-                tokenizer_name_or_path=self.model_args.model_name_or_path,
-                num_tasks=self.model_args.pt_num_tasks,
-                num_ranks=self.model_args.pt_num_ranks,
-                task_type="CAUSAL_LM",
-                prompt_tuning_init='TEXT',
-                num_virtual_tokens=self.model_args.pt_virtual_tokens,
-                num_transformer_submodules=1,
-                prompt_tuning_init_text=self.model_args.prompt_tuning_init_text,
-            )
+            if self.model_args.pt_init_state_dict is None:
+                peft_config = MultitaskPromptTuningConfig(
+                    tokenizer_name_or_path=self.model_args.model_name_or_path,
+                    num_tasks=self.model_args.pt_num_tasks,
+                    num_ranks=self.model_args.pt_num_ranks,
+                    task_type="CAUSAL_LM",
+                    prompt_tuning_init='TEXT',
+                    num_virtual_tokens=self.model_args.pt_virtual_tokens,
+                    num_transformer_submodules=1,
+                    prompt_tuning_init_text=self.model_args.prompt_tuning_init_text,
+                )
+            else:
+                peft_config = MultitaskPromptTuningConfig(
+                    tokenizer_name_or_path=self.model_args.model_name_or_path,
+                    num_tasks=1,
+                    num_ranks=self.model_args.pt_num_ranks,
+                    task_type="CAUSAL_LM",
+                    prompt_tuning_init=MultitaskPromptTuningInit.AVERAGE_SOURCE_TASKS,
+                    prompt_tuning_init_state_dict_path=self.model_args.pt_init_state_dict,
+                    num_virtual_tokens=self.model_args.pt_virtual_tokens,
+                    num_transformer_submodules=1,
+                )
 
         return peft_config
 
