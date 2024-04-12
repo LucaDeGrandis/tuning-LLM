@@ -97,10 +97,6 @@ class ModelArguments:
             "help": "The path to the prompt tuning state dict used for initialization."
         },
     )
-    pt_init_state_dict: Optional[str] = field(
-        default=None,
-        metadata={"help": "The state dict from which to train the target mpt."},
-    )
 
     #####################################
     # Multitask Prompt Tuning arguments #
@@ -135,6 +131,10 @@ class ModelArguments:
         metadata={
             "help": "The path to the task ids for the dev dataset."
         },
+    )
+    mpt_init_state_dict: Optional[str] = field(
+        default=None,
+        metadata={"help": "The state dict from which to train the target mpt."},
     )
 
     ###################
@@ -252,7 +252,7 @@ def create_datasets(
     data_train_raw = load_jsonl_file(data_args.training_data_path)
     data_dev_raw = load_jsonl_file(data_args.dev_data_path)
 
-    if model_args.use_peft_mpt:
+    if model_args.use_peft_mpt and model_args.mpt_init_state_dict is None:
         assert model_args.training_data_ids is not None
         assert model_args.dev_data_ids is not None
         data_train_ids = load_jsonl_file(model_args.training_data_ids)
@@ -261,9 +261,14 @@ def create_datasets(
         assert len(data_dev_ids) == len(data_dev_raw)
         train_data = Dataset.from_dict({'prompt': data_train_raw, 'task_ids': data_train_ids})
         valid_data = Dataset.from_dict({'prompt': data_dev_raw, 'task_ids': data_dev_ids})
+    elif model_args.use_peft_mpt:
+        train_data = Dataset.from_dict({'prompt': data_train_raw, 'task_ids': [0]*len(data_train_raw)})
+        valid_data = Dataset.from_dict({'prompt': data_dev_raw, 'task_ids': [0]*len(data_dev_raw)})
     else:
         train_data = Dataset.from_dict({'prompt': data_train_raw})
         valid_data = Dataset.from_dict({'prompt': data_dev_raw})
+
+    print(train_data)
 
     train_data = train_data.shuffle(seed=data_args.train_shuffle_seed)
     print(
@@ -370,7 +375,7 @@ class ModelInit():
             )
 
         if self.model_args.use_peft_mpt:
-            if self.model_args.pt_init_state_dict is None:
+            if self.model_args.mpt_init_state_dict is None:
                 peft_config = MultitaskPromptTuningConfig(
                     tokenizer_name_or_path=self.model_args.model_name_or_path,
                     num_tasks=self.model_args.pt_num_tasks,
@@ -388,7 +393,7 @@ class ModelInit():
                     num_ranks=self.model_args.pt_num_ranks,
                     task_type="CAUSAL_LM",
                     prompt_tuning_init=MultitaskPromptTuningInit.AVERAGE_SOURCE_TASKS,
-                    prompt_tuning_init_state_dict_path=self.model_args.pt_init_state_dict,
+                    prompt_tuning_init_state_dict_path=self.model_args.mpt_init_state_dict,
                     num_virtual_tokens=self.model_args.pt_virtual_tokens,
                     num_transformer_submodules=1,
                 )
