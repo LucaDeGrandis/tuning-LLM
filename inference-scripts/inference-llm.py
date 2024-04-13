@@ -129,7 +129,7 @@ def create_generator(args, tokenizer):
     if args.use_peft_lora:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            if len(tok['input_ids']) < max_length:
+            if len(tok['input_ids'][0]) < max_length:
                 gen = model.generate(
                     tok['input_ids'],
                     max_length=max_length,
@@ -142,7 +142,7 @@ def create_generator(args, tokenizer):
     elif args.use_peft_pt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            if len(tok['input_ids']) < max_length:
+            if len(tok['input_ids'][0]) < max_length:
                 gen = model.generate(
                     input_ids=tok['input_ids'],
                     attention_mask=tok['attention_mask'],
@@ -158,7 +158,7 @@ def create_generator(args, tokenizer):
             tok = tokenizer(prompt[0], return_tensors='pt')
             tok['task_ids'] = torch.tensor([prompt[1]])
             tok.to('cuda')
-            if len(tok['input_ids']) < max_length:
+            if len(tok['input_ids'][0]) < max_length:
                 gen = model.generate(
                     input_ids=tok['input_ids'],
                     attention_mask=tok['attention_mask'],
@@ -173,7 +173,7 @@ def create_generator(args, tokenizer):
     else:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            if len(tok['input_ids']) < max_length:
+            if len(tok['input_ids'][0]) < max_length:
                 gen = model.generate(
                     tok['input_ids'],
                     max_length=max_length,
