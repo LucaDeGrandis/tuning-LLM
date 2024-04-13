@@ -129,48 +129,60 @@ def create_generator(args, tokenizer):
     if args.use_peft_lora:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(
-                tok['input_ids'],
-                max_length=max_length,
-                temperature=0,
-                eos_token_id=eos_token_id
-            )[0]
-            return tokenizer.decode(gen)
+            if len(tok['input_ids']) < max_length:
+                gen = model.generate(
+                    tok['input_ids'],
+                    max_length=max_length,
+                    temperature=0,
+                    eos_token_id=eos_token_id
+                )[0]
+                return tokenizer.decode(gen)
+            else:
+                return prompt
     elif args.use_peft_pt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(
-                input_ids=tok['input_ids'],
-                attention_mask=tok['attention_mask'],
-                max_length=max_length,
-                temperature=0,
-                eos_token_id=eos_token_id
-            )[0]
-            return tokenizer.decode(gen)
+            if len(tok['input_ids']) < max_length:
+                gen = model.generate(
+                    input_ids=tok['input_ids'],
+                    attention_mask=tok['attention_mask'],
+                    max_length=max_length,
+                    temperature=0,
+                    eos_token_id=eos_token_id
+                )[0]
+                return tokenizer.decode(gen)
+            else:
+                return prompt
     elif args.use_peft_mpt:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt[0], return_tensors='pt')
             tok['task_ids'] = torch.tensor([prompt[1]])
             tok.to('cuda')
-            gen = model.generate(
-                input_ids=tok['input_ids'],
-                attention_mask=tok['attention_mask'],
-                task_ids=tok['task_ids'],
-                max_length=max_length,
-                temperature=0,
-                eos_token_id=eos_token_id
-            )[0]
-            return tokenizer.decode(gen)
+            if len(tok['input_ids']) < max_length:
+                gen = model.generate(
+                    input_ids=tok['input_ids'],
+                    attention_mask=tok['attention_mask'],
+                    task_ids=tok['task_ids'],
+                    max_length=max_length,
+                    temperature=0,
+                    eos_token_id=eos_token_id
+                )[0]
+                return tokenizer.decode(gen)
+            else:
+                return prompt
     else:
         def generator(model, tokenizer, prompt, max_length):
             tok = tokenizer(prompt, return_tensors='pt').to('cuda')
-            gen = model.generate(
-                tok['input_ids'],
-                max_length=max_length,
-                temperature=0,
-                eos_token_id=eos_token_id
-            )[0]
-            return tokenizer.decode(gen)
+            if len(tok['input_ids']) < max_length:
+                gen = model.generate(
+                    tok['input_ids'],
+                    max_length=max_length,
+                    temperature=0,
+                    eos_token_id=eos_token_id
+                )[0]
+                return tokenizer.decode(gen)
+            else:
+                return prompt
     return generator
 
 
