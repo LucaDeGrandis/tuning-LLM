@@ -28,7 +28,7 @@ def process_targets(line):
     return ' '.join(keys).strip()
 sources = list(map(process_sources, load_txt_file('/content/ctrl-sum/datasets/cnndm/train.source')))
 targets = list(map(process_targets, load_txt_file('/content/ctrl-sum/datasets/cnndm/train.oraclewordns')))
-data_dict = {'input': sources[:100], 'output': targets[:100]}
+data_dict = {'input': sources, 'output': targets}
 train_dataset = Dataset.from_dict(data_dict)
 def tokenize(line):
     tok_input = tokenizer(line['input'], truncation=True, padding='max_length', max_length=1024)
@@ -44,7 +44,7 @@ train_dataset = train_dataset.remove_columns(['input', 'output'])
 # Valid
 sources = list(map(process_sources, load_txt_file('/content/ctrl-sum/datasets/cnndm/val.source')))
 targets = list(map(process_targets, load_txt_file('/content/ctrl-sum/datasets/cnndm/val.oraclewordns')))
-data_dict = {'input': sources[:100], 'output': targets[:100]}
+data_dict = {'input': sources, 'output': targets}
 eval_dataset = Dataset.from_dict(data_dict)
 def tokenize(line):
     tok_input = tokenizer(line['input'], truncation=True, padding='max_length', max_length=1024)
@@ -59,24 +59,22 @@ eval_dataset = eval_dataset.remove_columns(['input', 'output'])
 
 # Define training arguments (adjust as needed)
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./output",
     overwrite_output_dir=True,
-    num_train_epochs=3,
-    save_steps=2000,
-    save_total_limit=2,
-    per_device_train_batch_size=2,
-    per_device_eval_batch_size=1,
-    gradient_accumulation_steps=8
+    num_train_epochs=1,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=4,
+    evaluation_strategy="steps",
+    save_strategy="steps",
+    eval_steps=2000,
+    warmup_steps=1000,
+    learning_rate=2e-5,
+    logging_strategy='steps',
+    logging_steps=500,
+    lr_scheduler_type='polynomial',
+    lr_scheduler_kwargs={'power': 1.0},
+    output_dir='/content/drive/Shareddrives/LLM_test/Luca_De_Grandis_test/aspect_based_summarization/experiments/exp_012/models/bart_large_cnndm_key',
 )
-
-# # Collator
-# data_collator = DataCollatorForSeq2Seq(
-#     tokenizer=tokenizer,
-#     model=model,
-#     padding='max_length',
-#     max_length=1024,
-#     # return_tensors
-# )
 
 # Create the Trainer instance
 trainer = Seq2SeqTrainer(
@@ -84,7 +82,6 @@ trainer = Seq2SeqTrainer(
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
-    # data_collator=data_collator,
     tokenizer=tokenizer,
 )
 
