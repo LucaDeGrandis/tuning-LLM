@@ -10,8 +10,7 @@ from transformers import (
 
 from dataclasses import dataclass, field
 
-from typing import Optional, List, Any, Dict
-import json
+from typing import Optional, List, Dict
 import wandb
 
 
@@ -125,39 +124,14 @@ class CustomTrainingArguments:
     )
 
 
-def load_json_file(filepath):
-    """
-    Loads a JSON file and returns its contents as a Python dictionary.
-
-    Args:
-        filepath (str): The path to the JSON file.
-
-    Returns:
-        dict: The contents of the JSON file as a Python dictionary.
-    """
-    with open(filepath, 'r', encoding='utf8') as reader:
-        json_data = json.load(reader)
-    return json_data
-
-
-def load_jsonl_file(
-    filepath: str,
-) -> List[Any]:
-    """
-    Loads a JSONL file and returns its contents as a list of dictionaries.
-
-    Args:
-        filepath (str): The path to the JSONL file.
-
-    Returns:
-        list: A list of dictionaries representing the contents of the JSONL file.
-                If the jsonl was saved from a list, the function returns the list.
-    """
+def load_txt_file(
+    filepath: str
+) -> List[str]:
     data = []
-    with open(filepath, "r", encoding='utf8') as f:
-        lines = f.readlines()
+    with open(filepath, 'r', encoding='utf8') as reader:
+        lines = reader.readlines()
         for line in lines:
-            data.append(json.loads(line.strip()))
+            data.append(line)
     return data
 
 
@@ -206,15 +180,15 @@ def create_datasets(
         tuple: A tuple containing the train dataset and dev dataset.
     """
     # Train data
-    train_source = list(map(process_line, load_json_file(data_args.train_source)))
-    train_target = list(map(process_line, load_json_file(data_args.train_target)))
+    train_source = list(map(process_line, load_txt_file(data_args.train_source)))
+    train_target = list(map(process_line, load_txt_file(data_args.train_target)))
     train_dataset = Dataset.from_dict({'input': train_source, 'output': train_target})
     train_dataset = train_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
     train_dataset = train_dataset.remove_columns(['input', 'output'])
 
     # Dev data
-    dev_source = list(map(process_line, load_json_file(data_args.dev_source)))
-    dev_target = list(map(process_line, load_json_file(data_args.dev_target)))
+    dev_source = list(map(process_line, load_txt_file(data_args.dev_source)))
+    dev_target = list(map(process_line, load_txt_file(data_args.dev_target)))
     dev_dataset = Dataset.from_dict({'input': dev_source, 'output': dev_target})
     dev_dataset = dev_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
     dev_dataset = dev_dataset.remove_columns(['input', 'output'])
