@@ -282,7 +282,7 @@ def main(model_args, data_args, training_args):
         save_strategy=training_args.save_strategy,
         eval_steps=training_args.eval_steps,
         warmup_steps=training_args.warmup_steps,
-        learning_rate=training_args.learning_rate,
+        learning_rate=training_args.lr,
         logging_strategy=training_args.logging_strategy,
         logging_steps=training_args.logging_steps,
         lr_scheduler_type=training_args.lr_scheduler_type,
