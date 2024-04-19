@@ -97,8 +97,8 @@ class CustomTrainingArguments:
         default='steps',
         metadata={"help": "The logging strategy. Use 'epoch' or 'steps'."},
     )
-    logging_steps: Optional[str] = field(
-        default='steps',
+    logging_steps: Optional[int] = field(
+        default=100,
         metadata={"help": "The logging steps. Only usable if logging_strategy is 'steps'."},
     )
     evaluation_strategy: Optional[str] = field(
@@ -286,7 +286,7 @@ def main(model_args, data_args, training_args):
         logging_strategy=training_args.logging_strategy,
         logging_steps=training_args.logging_steps,
         lr_scheduler_type=training_args.lr_scheduler_type,
-        lr_scheduler_kwargs={'power': training_args.lr_scheduler_kwargs},
+        lr_scheduler_kwargs={'power': training_args.lr_scheduler_kwargs_power},
         output_dir=training_args.output_dir,
     )
 
