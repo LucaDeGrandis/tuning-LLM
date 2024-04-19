@@ -23,11 +23,13 @@ class ModelArguments:
         }
     )
     wandb_project: str = field(
+        default=None,
         metadata={
             "help": "The wandb project name."
         }
     )
     wandb_run_name: str = field(
+        default=None,
         metadata={
             "help": "The wandb run name."
         }
@@ -332,6 +334,6 @@ if __name__ == "__main__":
         (ModelArguments, DataTrainingArguments, CustomTrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    if training_args.report_to == ['wandb']:
+    if model_args.wandb_project is not None:
         register_wandb_project(model_args)
     main(model_args, data_args, training_args)
