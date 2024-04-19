@@ -191,7 +191,7 @@ def tokenize(
 
 
 def create_datasets(
-    data_args,
+    data_args, tokenizer,
 ):
     """Create train and dev datasets.
 
@@ -209,14 +209,14 @@ def create_datasets(
     train_source = list(map(process_line, load_json_file(data_args.train_source)))
     train_target = list(map(process_line, load_json_file(data_args.train_target)))
     train_dataset = Dataset.from_dict({'input': train_source, 'output': train_target})
-    train_dataset = train_dataset.map(lambda data: tokenize(data), batched=True)
+    train_dataset = train_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
     train_dataset = train_dataset.remove_columns(['input', 'output'])
 
     # Dev data
     dev_source = list(map(process_line, load_json_file(data_args.dev_source)))
     dev_target = list(map(process_line, load_json_file(data_args.dev_target)))
     dev_dataset = Dataset.from_dict({'input': dev_source, 'output': dev_target})
-    dev_dataset = dev_dataset.map(lambda data: tokenize(data), batched=True)
+    dev_dataset = dev_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
     dev_dataset = dev_dataset.remove_columns(['input', 'output'])
 
     return train_dataset, dev_dataset
@@ -294,7 +294,7 @@ def main(model_args, data_args, training_args):
 
     # datasets
     train_dataset, eval_dataset = create_datasets(
-        data_args, model_args,
+        data_args, tokenizer
     )
 
     # Define training arguments
