@@ -126,6 +126,11 @@ class CustomTrainingArguments:
         metadata={"help": "The seed for initializing training (reproducibility)."},
     )
 
+    training_seed: Optional[int] = field(
+        default=42,
+        metadata={"help": "The seed for initializing training (reproducibility)."},
+    )
+
 
 def load_txt_file(
     filepath: str
@@ -292,6 +297,7 @@ def main(model_args, data_args, training_args):
         lr_scheduler_type=training_args.lr_scheduler_type,
         lr_scheduler_kwargs={'power': training_args.lr_scheduler_kwargs_power},
         output_dir=training_args.output_dir,
+        seed=training_args.training_seed,
     )
 
     # Create the Trainer instance
