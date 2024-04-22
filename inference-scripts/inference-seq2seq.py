@@ -7,8 +7,9 @@ from transformers import (
 
 from dataclasses import dataclass, field
 import json
+import os
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import wandb
 
 
@@ -19,106 +20,21 @@ class ModelArguments:
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         }
     )
-    wandb_project: str = field(
-        default=None,
-        metadata={
-            "help": "The wandb project name."
-        }
-    )
-    wandb_run_name: str = field(
-        default=None,
-        metadata={
-            "help": "The wandb run name."
-        }
-    )
 
 
 @dataclass
 class DataTrainingArguments:
-    train_source: Optional[str] = field(
-        default=False,
-        metadata={"help": "The training source file."},
-    )
-    train_target: Optional[str] = field(
-        default=False,
-        metadata={"help": "The training target file."},
-    )
-    dev_source: Optional[str] = field(
-        default=False,
-        metadata={"help": "The dev source file."},
-    )
-    dev_target: Optional[str] = field(
-        default=False,
-        metadata={"help": "The dev target file."},
+    test_source: Optional[str] = field(
+        default=None,
+        metadata={"help": "The test source file."},
     )
 
 
 @dataclass
 class CustomTrainingArguments:
-    overwrite_output_dir: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Wheter to overwrite the output directory. Useful for continuing training."},
-    )
-    num_train_epochs: Optional[int] = field(
-        default=1,
-        metadata={"help": "Number of training epochs for taining."},
-    )
-    per_device_train_batch_size: Optional[int] = field(
-        default=1,
-        metadata={"help": "Batch size per device. Usually kept between 1 and 4."},
-    )
-    per_device_eval_batch_size: Optional[int] = field(
-        default=1,
-        metadata={"help": "Batch size per device. Usually kept between 1 and 4."},
-    )
-    gradient_accumulation_steps: Optional[int] = field(
-        default=1,
-        metadata={"help": "Steps of gradient accumulation. Kept between 4 and 8, it depends on the batch size."},
-    )
-    lr: Optional[float] = field(
-        default=2e-5,
-        metadata={"help": "The desired learning rate."},
-    )
-    lr_scheduler_type: Optional[str] = field(
-        default='polynomial',
-        metadata={"help": "The desired learning rate scheduler."},
-    )
-    lr_scheduler_kwargs_power: Optional[float] = field(
-        default=1.0,
-        metadata={"help": "The power of the polynomial learning rate."},
-    )
-    warmup_steps: Optional[int] = field(
-        default=100,
-        metadata={"help": "Number of steps in which the learning rate in increased to the desired value."},
-    )
-    logging_strategy: Optional[str] = field(
-        default='steps',
-        metadata={"help": "The logging strategy. Use 'epoch' or 'steps'."},
-    )
-    logging_steps: Optional[int] = field(
-        default=100,
-        metadata={"help": "The logging steps. Only usable if logging_strategy is 'steps'."},
-    )
-    evaluation_strategy: Optional[str] = field(
-        default='epoch',
-        metadata={"help": "The evaluation strategy. Use 'epoch' or 'steps'."},
-    )
-    eval_steps: Optional[int] = field(
-        default=1000,
-        metadata={"help": "Number of steps between evaluations."},
-    )
-    save_strategy: Optional[str] = field(
-        default='steps',
-        metadata={"help": "The saving strategy. Use 'epoch' or 'steps'."},
-    )
-
-    output_dir: Optional[str] = field(
-        default='./output',
-        metadata={"help": "The output directory."},
-    )
-    seed: Optional[int] = field(
-        default=42,
-        metadata={"help": "The seed for initializing training (reproducibility)."},
+    out_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "The path of the output generation file."},
     )
 
 
@@ -183,22 +99,6 @@ def create_datasets(
 ):
     test_source = list(map(process_line, load_txt_file(data_args.test_source)))
     return test_source
-
-
-def register_wandb_project(
-    model_args
-) -> None:
-    """
-    Registers the Weights and Biases (wandb) project.
-
-    Args:
-        model_args (object): An object containing the model arguments.
-                                Must contain wandb_project and wandb_run_name.
-
-    Returns:
-        None
-    """
-    wandb.init(project=model_args.wandb_project, name=model_args.wandb_run_name)
 
 
 class ModelInit():
@@ -288,6 +188,4 @@ if __name__ == "__main__":
         (ModelArguments, DataTrainingArguments, CustomTrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    if model_args.wandb_project is not None:
-        register_wandb_project(model_args)
     main(model_args, data_args, training_args)
