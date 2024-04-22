@@ -113,7 +113,10 @@ class CustomTrainingArguments:
         default='steps',
         metadata={"help": "The saving strategy. Use 'epoch' or 'steps'."},
     )
-
+    save_steps: Optional[int] = field(
+        default=500,
+        metadata={"help": "Number of steps between model checkpoints."},
+    )
     output_dir: Optional[str] = field(
         default='./output',
         metadata={"help": "The output directory."},
@@ -280,6 +283,7 @@ def main(model_args, data_args, training_args):
         gradient_accumulation_steps=training_args.gradient_accumulation_steps,
         evaluation_strategy=training_args.evaluation_strategy,
         save_strategy=training_args.save_strategy,
+        save_steps=training_args.save_steps,
         eval_steps=training_args.eval_steps,
         warmup_steps=training_args.warmup_steps,
         learning_rate=training_args.lr,
