@@ -6,11 +6,11 @@ from transformers import (
 )
 
 from dataclasses import dataclass, field
+from typing import Optional, List, Dict, Any
+
+from tqdm import tqdm
 import json
 import os
-
-from typing import Optional, List, Dict, Any
-import wandb
 
 
 @dataclass
@@ -69,31 +69,6 @@ def process_line(line):
     return line.strip()
 
 
-def tokenize(
-    line: Dict[str, str],
-    tokenizer
-):
-    """Tokenizes the data for sequence to sequence training.
-
-    Args:
-        line: The data arguments.
-            The data must be stored in jsonl files. Each line of the file must be a string.
-            For each train dataset (train/valid) you need:
-                - A source file with the input documents (one per line)
-                - A target file with the output summaries (one per line)
-
-    Returns:
-        tuple: A tuple containing the train dataset and dev dataset.
-    """
-    tok_input = tokenizer(line['input'], truncation=True, padding='max_length', max_length=1024)
-    tok_output = tokenizer(line['output'], truncation=True, padding='max_length', max_length=50)
-    return {
-        'input_ids': tok_input['input_ids'],
-        'attention_mask': tok_input['attention_mask'],
-        'labels': tok_output['input_ids'],
-    }
-
-
 def create_datasets(
     data_args,
 ):
@@ -150,7 +125,7 @@ def create_and_prepare_model(model_args, data_args, training_args):
 
 
 def generator(model, tokenizer, prompt, max_length):
-    tok = tokenizer(prompt, max_length=max_length, padding="max_length", truncate=True, return_tensors='pt').to('cuda')
+    tok = tokenizer(prompt, max_length=max_length, padding="max_length", truncation=True, return_tensors='pt').to('cuda')
     gen = model.generate(
         tok['input_ids'],
     )
@@ -170,7 +145,7 @@ def main(model_args, data_args, training_args):
 
     # generate
     outputs = []
-    for line in test_source:
+    for line in tqdm(test_source):
         outputs.append(
             generator(model, tokenizer, line, 1024)
         )
