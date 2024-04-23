@@ -53,6 +53,14 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "The dev target file."},
     )
+    source_max_length: Optional[int] = field(
+        default=1024,
+        metadata={"help": "The maximum length for the source documents."},
+    )
+    target_max_length: Optional[int] = field(
+        default=200,
+        metadata={"help": "The maximum length for the output summaries."},
+    )
 
 
 @dataclass
@@ -148,6 +156,7 @@ def process_line(line):
 
 def tokenize(
     line: Dict[str, str],
+    data_args,
     tokenizer
 ):
     """Tokenizes the data for sequence to sequence training.
@@ -162,8 +171,8 @@ def tokenize(
     Returns:
         tuple: A tuple containing the train dataset and dev dataset.
     """
-    tok_input = tokenizer(line['input'], truncation=True, padding='max_length', max_length=1024)
-    tok_output = tokenizer(line['output'], truncation=True, padding='max_length', max_length=50)
+    tok_input = tokenizer(line['input'], truncation=True, padding='max_length', max_length=data_args.source_max_length)
+    tok_output = tokenizer(line['output'], truncation=True, padding='max_length', max_length=data_args.target_max_length)
     return {
         'input_ids': tok_input['input_ids'],
         'attention_mask': tok_input['attention_mask'],
@@ -190,14 +199,14 @@ def create_datasets(
     train_source = list(map(process_line, load_txt_file(data_args.train_source)))
     train_target = list(map(process_line, load_txt_file(data_args.train_target)))
     train_dataset = Dataset.from_dict({'input': train_source, 'output': train_target})
-    train_dataset = train_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
+    train_dataset = train_dataset.map(lambda data: tokenize(data, data_args, tokenizer), batched=True)
     train_dataset = train_dataset.remove_columns(['input', 'output'])
 
     # Dev data
     dev_source = list(map(process_line, load_txt_file(data_args.dev_source)))
     dev_target = list(map(process_line, load_txt_file(data_args.dev_target)))
     dev_dataset = Dataset.from_dict({'input': dev_source, 'output': dev_target})
-    dev_dataset = dev_dataset.map(lambda data: tokenize(data, tokenizer), batched=True)
+    dev_dataset = dev_dataset.map(lambda data: tokenize(data, data_args, tokenizer), batched=True)
     dev_dataset = dev_dataset.remove_columns(['input', 'output'])
 
     return train_dataset, dev_dataset
