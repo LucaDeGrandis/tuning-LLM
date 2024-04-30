@@ -133,7 +133,7 @@ def create_generator(args, tokenizer):
                 gen = model.generate(
                     tok['input_ids'],
                     max_length=max_length,
-                    temperature=0,
+                    temperature=1e-6,
                     eos_token_id=eos_token_id
                 )[0]
                 return tokenizer.decode(gen)
@@ -147,7 +147,7 @@ def create_generator(args, tokenizer):
                     input_ids=tok['input_ids'],
                     attention_mask=tok['attention_mask'],
                     max_length=max_length,
-                    temperature=0,
+                    temperature=1e-6,
                     eos_token_id=eos_token_id
                 )[0]
                 return tokenizer.decode(gen)
@@ -164,7 +164,7 @@ def create_generator(args, tokenizer):
                     attention_mask=tok['attention_mask'],
                     task_ids=tok['task_ids'],
                     max_length=max_length,
-                    temperature=0,
+                    temperature=1e-6,
                     eos_token_id=eos_token_id
                 )[0]
                 return tokenizer.decode(gen)
@@ -177,7 +177,7 @@ def create_generator(args, tokenizer):
                 gen = model.generate(
                     tok['input_ids'],
                     max_length=max_length,
-                    temperature=0,
+                    temperature=1e-6,
                     eos_token_id=eos_token_id
                 )[0]
                 return tokenizer.decode(gen)
